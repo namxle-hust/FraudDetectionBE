@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraud Detection — live review queue</title>
+<style>
+  :root{
+    --bg:#FBFAF9;--panel:#fff;--ink:#1B1613;--muted:#6E655F;--line:#E8E2DD;
+    --accent:#C8102E;--accent-tint:#FBEEF0;
+    --ok:#1E7A45;--ok-tint:#E7F4EC;--warn:#9A6A00;--warn-tint:#FBF1DC;--crit:#B0241C;--crit-tint:#FBE9E7;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#141110;--panel:#1D1917;--ink:#F2EDE9;--muted:#A79E97;--line:#2C2623;
+    --accent:#F0526A;--accent-tint:#2A1618;
+    --ok:#5BC98A;--ok-tint:#15251C;--warn:#E0AC53;--warn-tint:#2A2113;--crit:#F0857A;--crit-tint:#2A1613;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;font-size:15px}
+  .wrap{max-width:1040px;margin:0 auto;padding:clamp(18px,4vw,40px)}
+  a{color:var(--accent)}
+  header{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:24px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{font-size:clamp(24px,4vw,34px);margin:.3em 0 .2em;letter-spacing:-.02em;font-weight:800}
+  .sub{color:var(--muted);margin:0;max-width:70ch}
+  .modelbar{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:13px;color:var(--muted)}
+  .modelbar code{font-family:var(--mono);color:var(--ink);background:var(--accent-tint);padding:1px 7px;border-radius:5px;font-size:12px}
+  h2{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:30px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+  @media(max-width:620px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+  .tile .n{font-size:26px;font-weight:800;font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:1}
+  .tile .l{font-size:12px;color:var(--muted);margin-top:6px}
+  .tile.block .n{color:var(--crit)}.tile.review .n{color:var(--warn)}.tile.approve .n{color:var(--ok)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:9px 12px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+  th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;border-top:none;background:var(--bg);position:sticky;top:0}
+  td:first-child,th:first-child,td.l,th.l{text-align:left}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .bar{display:inline-block;height:7px;border-radius:4px;background:var(--accent);vertical-align:middle;margin-left:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:100px}
+  .pill::before{content:"";width:6px;height:6px;border-radius:100px;background:currentColor}
+  .b-BLOCK{color:var(--crit);background:var(--crit-tint)}.b-REVIEW{color:var(--warn);background:var(--warn-tint)}.b-APPROVE{color:var(--ok);background:var(--ok-tint)}
+  form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  @media(max-width:620px){form{grid-template-columns:repeat(2,1fr)}}
+  label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+  input,select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .actions{grid-column:1/-1;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  button{font:inherit;font-weight:700;font-size:14px;padding:9px 18px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
+  button:hover{filter:brightness(.94)}
+  #manualOut{font-size:15px;font-weight:600}
+  .note{color:var(--muted);font-size:12.5px;margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+  .status{color:var(--muted);padding:24px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Business Analytics · Module 6 — live demo</div>
+    <h1>🛡️ Payment fraud — analyst review queue</h1>
+    <p class="sub">The deployed <strong>XGBoost Base</strong> model scores each transaction <strong>in your browser</strong>
+      and sorts a review queue by risk under a three-tier policy. No server, no data leaves the page —
+      the model tree ensemble runs client-side and matches the Python API to within 2&times;10<sup>&minus;7</sup>.</p>
+    <div class="modelbar" id="modelbar"><span>loading model…</span></div>
+  </header>
+
+  <div id="app" hidden>
+    <h2>Queue summary</h2>
+    <div class="tiles">
+      <div class="tile"><div class="n" id="k-total">0</div><div class="l">transactions</div></div>
+      <div class="tile block"><div class="n" id="k-block">0</div><div class="l">⛔ auto-block</div></div>
+      <div class="tile review"><div class="n" id="k-review">0</div><div class="l">🔍 manual review</div></div>
+      <div class="tile approve"><div class="n" id="k-approve">0</div><div class="l">✅ auto-approve</div></div>
+    </div>
+
+    <h2>Review queue — highest risk first</h2>
+    <div class="panel scroll">
+      <table>
+        <thead><tr>
+          <th class="l">Txn</th><th class="l">Type</th><th>Amount</th>
+          <th>Old bal (orig)</th><th>New bal (orig)</th><th>Fraud prob.</th><th class="l">Decision</th>
+        </tr></thead>
+        <tbody id="queue"></tbody>
+      </table>
+    </div>
+
+    <h2>Score a transaction</h2>
+    <form id="manual">
+      <label>Type
+        <select id="m-type"><option>TRANSFER</option><option>CASH_OUT</option></select></label>
+      <label>Amount<input id="m-amount" type="number" step="any" value="181"></label>
+      <label>Old balance (origin)<input id="m-oo" type="number" step="any" value="181"></label>
+      <label>New balance (origin)<input id="m-no" type="number" step="any" value="0"></label>
+      <label>Old balance (dest)<input id="m-od" type="number" step="any" value="0"></label>
+      <label>New balance (dest)<input id="m-nd" type="number" step="any" value="0"></label>
+      <div class="actions"><button type="submit">Score</button><span id="manualOut"></span></div>
+    </form>
+
+    <p class="note">Deployed model: <strong>XGBoost Base</strong> (8 features; the page derives
+      <code>errorBalance*</code> and <code>type_TRANSFER</code> the same way the server does).
+      Policy: <em>approve</em> below <span id="n-thr"></span> ≤ <em>manual-review</em> below
+      <span id="n-blk"></span> ≤ <em>auto-block</em>. Fraud occurs only in TRANSFER / CASH_OUT.
+      Source &amp; full pipeline: <a href="https://github.com/namxle-hust/FraudDetectionBE">github.com/namxle-hust/FraudDetectionBE</a>.</p>
+  </div>
+  <div id="loading" class="status">Loading the model (~1.4 MB)…</div>
+</div>
+
+<script>
+const SAMPLES=[
+ {id:"T1",type:"TRANSFER",amount:181,oldbalanceOrg:181,newbalanceOrig:0,oldbalanceDest:0,newbalanceDest:0},
+ {id:"T2",type:"CASH_OUT",amount:229133.94,oldbalanceOrg:229133.94,newbalanceOrig:0,oldbalanceDest:0,newbalanceDest:229133.94},
+ {id:"T3",type:"TRANSFER",amount:1500000,oldbalanceOrg:1500000,newbalanceOrig:0,oldbalanceDest:0,newbalanceDest:0},
+ {id:"T4",type:"CASH_OUT",amount:5000,oldbalanceOrg:20000,newbalanceOrig:15000,oldbalanceDest:1000,newbalanceDest:6000},
+ {id:"T5",type:"TRANSFER",amount:2000,oldbalanceOrg:50000,newbalanceOrig:48000,oldbalanceDest:10000,newbalanceDest:12000},
+ {id:"T6",type:"CASH_OUT",amount:300,oldbalanceOrg:300,newbalanceOrig:0,oldbalanceDest:5000,newbalanceDest:5300},
+ {id:"T7",type:"TRANSFER",amount:850000,oldbalanceOrg:900000,newbalanceOrig:50000,oldbalanceDest:0,newbalanceDest:0},
+ {id:"T8",type:"CASH_OUT",amount:12000,oldbalanceOrg:60000,newbalanceOrig:48000,oldbalanceDest:20000,newbalanceDest:32000},
+ {id:"T9",type:"TRANSFER",amount:400000,oldbalanceOrg:400000,newbalanceOrig:0,oldbalanceDest:100000,newbalanceDest:0},
+ {id:"T10",type:"CASH_OUT",amount:7500,oldbalanceOrg:30000,newbalanceOrig:22500,oldbalanceDest:4000,newbalanceDest:11500}
+];
+let M=null;
+const fmt=n=>n.toLocaleString(undefined,{maximumFractionDigits:2});
+function fidx(s){const i=M.features.indexOf(s);return i>=0?i:parseInt(s.slice(1));}
+function evalTree(node,x){while(!('leaf'in node)){const f=fidx(node.split);const go=x[f]<node.split_condition?node.yes:node.no;node=node.children.find(c=>c.nodeid===go);}return node.leaf;}
+function featurize(t){const a=+t.amount,oo=+t.oldbalanceOrg,no=+t.newbalanceOrig,od=+t.oldbalanceDest,nd=+t.newbalanceDest;
+  const r={amount:a,oldbalanceOrg:oo,newbalanceOrig:no,oldbalanceDest:od,newbalanceDest:nd,errorBalanceOrig:no+a-oo,errorBalanceDest:od+a-nd,type_TRANSFER:t.type==="TRANSFER"?1:0};
+  return M.features.map(f=>r[f]);}
+function score(t){let s=M.base_margin;const x=featurize(t);for(const tr of M.trees)s+=evalTree(tr,x);return 1/(1+Math.exp(-s));}
+function decide(p){return p>=M.block_threshold?"BLOCK":p>=M.threshold?"REVIEW":"APPROVE";}
+
+function render(){
+  const scored=SAMPLES.map(t=>({...t,p:score(t)})).sort((a,b)=>b.p-a.p);
+  const c={BLOCK:0,REVIEW:0,APPROVE:0};scored.forEach(t=>c[decide(t.p)]++);
+  k_total.textContent=scored.length;k_block.textContent=c.BLOCK;k_review.textContent=c.REVIEW;k_approve.textContent=c.APPROVE;
+  queue.innerHTML=scored.map(t=>{const d=decide(t.p);const pct=(t.p*100);
+    return `<tr><td class="l">${t.id}</td><td class="l">${t.type}</td><td class="num">${fmt(t.amount)}</td>
+      <td class="num">${fmt(t.oldbalanceOrg)}</td><td class="num">${fmt(t.newbalanceOrig)}</td>
+      <td class="num">${pct.toFixed(2)}%<span class="bar" style="width:${Math.max(2,pct*0.5)}px"></span></td>
+      <td class="l"><span class="pill b-${d}">${d}</span></td></tr>`;}).join("");
+}
+async function boot(){
+  M=await (await fetch("model.json")).json();
+  document.getElementById("modelbar").innerHTML=
+    `<span>Model <code>XGBoost Base</code></span><span><code>${M.features.length}</code> features · <code>${M.trees.length}</code> trees</span>`+
+    `<span>approve &lt; <code>${M.threshold}</code> ≤ review &lt; <code>${M.block_threshold}</code> ≤ block</span>`;
+  n_thr.textContent=M.threshold;n_blk.textContent=M.block_threshold;
+  document.getElementById("loading").hidden=true;document.getElementById("app").hidden=false;
+  render();
+}
+document.getElementById("manual").addEventListener("submit",e=>{
+  e.preventDefault();
+  const t={type:m_type.value,amount:m_amount.value,oldbalanceOrg:m_oo.value,newbalanceOrig:m_no.value,oldbalanceDest:m_od.value,newbalanceDest:m_nd.value};
+  const p=score(t),d=decide(t.p=p);const col={BLOCK:"var(--crit)",REVIEW:"var(--warn)",APPROVE:"var(--ok)"}[d];
+  document.getElementById("manualOut").innerHTML=`<span style="color:${col}">${d}</span> — fraud probability <strong>${(p*100).toFixed(2)}%</strong>`;
+});
+boot().catch(e=>{document.getElementById("loading").textContent="Failed to load model: "+e;});
+</script>
+</body>
+</html>
