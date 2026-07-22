@@ -72,10 +72,10 @@
   <div id="app" hidden>
     <h2>Queue summary</h2>
     <div class="tiles">
-      <div class="tile"><div class="n" id="k-total">0</div><div class="l">transactions</div></div>
-      <div class="tile block"><div class="n" id="k-block">0</div><div class="l">⛔ auto-block</div></div>
-      <div class="tile review"><div class="n" id="k-review">0</div><div class="l">🔍 manual review</div></div>
-      <div class="tile approve"><div class="n" id="k-approve">0</div><div class="l">✅ auto-approve</div></div>
+      <div class="tile"><div class="n" id="k_total">0</div><div class="l">transactions</div></div>
+      <div class="tile block"><div class="n" id="k_block">0</div><div class="l">⛔ auto-block</div></div>
+      <div class="tile review"><div class="n" id="k_review">0</div><div class="l">🔍 manual review</div></div>
+      <div class="tile approve"><div class="n" id="k_approve">0</div><div class="l">✅ auto-approve</div></div>
     </div>
 
     <h2>Review queue — highest risk first</h2>
@@ -92,19 +92,19 @@
     <h2>Score a transaction</h2>
     <form id="manual">
       <label>Type
-        <select id="m-type"><option>TRANSFER</option><option>CASH_OUT</option></select></label>
-      <label>Amount<input id="m-amount" type="number" step="any" value="181"></label>
-      <label>Old balance (origin)<input id="m-oo" type="number" step="any" value="181"></label>
-      <label>New balance (origin)<input id="m-no" type="number" step="any" value="0"></label>
-      <label>Old balance (dest)<input id="m-od" type="number" step="any" value="0"></label>
-      <label>New balance (dest)<input id="m-nd" type="number" step="any" value="0"></label>
+        <select id="m_type"><option>TRANSFER</option><option>CASH_OUT</option></select></label>
+      <label>Amount<input id="m_amount" type="number" step="any" value="181"></label>
+      <label>Old balance (origin)<input id="m_oo" type="number" step="any" value="181"></label>
+      <label>New balance (origin)<input id="m_no" type="number" step="any" value="0"></label>
+      <label>Old balance (dest)<input id="m_od" type="number" step="any" value="0"></label>
+      <label>New balance (dest)<input id="m_nd" type="number" step="any" value="0"></label>
       <div class="actions"><button type="submit">Score</button><span id="manualOut"></span></div>
     </form>
 
     <p class="note">Deployed model: <strong>XGBoost Base</strong> (8 features; the page derives
       <code>errorBalance*</code> and <code>type_TRANSFER</code> the same way the server does).
-      Policy: <em>approve</em> below <span id="n-thr"></span> ≤ <em>manual-review</em> below
-      <span id="n-blk"></span> ≤ <em>auto-block</em>. Fraud occurs only in TRANSFER / CASH_OUT.
+      Policy: <em>approve</em> below <span id="n_thr"></span> ≤ <em>manual-review</em> below
+      <span id="n_blk"></span> ≤ <em>auto-block</em>. Fraud occurs only in TRANSFER / CASH_OUT.
       Source &amp; full pipeline: <a href="https://github.com/namxle-hust/FraudDetectionBE">github.com/namxle-hust/FraudDetectionBE</a>.</p>
   </div>
   <div id="loading" class="status">Loading the model (~1.4 MB)…</div>
