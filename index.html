@@ -3,112 +3,211 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fraud Detection — live review queue</title>
+<title>Fraud review — analyst console</title>
 <style>
   :root{
-    --bg:#FBFAF9;--panel:#fff;--ink:#1B1613;--muted:#6E655F;--line:#E8E2DD;
-    --accent:#C8102E;--accent-tint:#FBEEF0;
-    --ok:#1E7A45;--ok-tint:#E7F4EC;--warn:#9A6A00;--warn-tint:#FBF1DC;--crit:#B0241C;--crit-tint:#FBE9E7;
+    --bg:#F6F4F1; --surface:#FFFFFF; --surface-2:#FBFAF8;
+    --ink:#201C19; --muted:#6F665F; --faint:#9A928B; --line:#E7E0DA;
+    --accent:#A4262C; --accent-soft:#F5E7E6;
+    --ok:#1C7A46; --ok-tint:#E8F3EC; --warn:#8A5A00; --warn-tint:#F6EFD8; --crit:#B4232E; --crit-tint:#F8E7E6;
+    --btn-bg:#26211D; --btn-fg:#F6F4F1;
     --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,monospace;
     --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --radius:7px;
   }
   @media (prefers-color-scheme:dark){:root{
-    --bg:#141110;--panel:#1D1917;--ink:#F2EDE9;--muted:#A79E97;--line:#2C2623;
-    --accent:#F0526A;--accent-tint:#2A1618;
-    --ok:#5BC98A;--ok-tint:#15251C;--warn:#E0AC53;--warn-tint:#2A2113;--crit:#F0857A;--crit-tint:#2A1613;
+    --bg:#151210; --surface:#1C1815; --surface-2:#221D18;
+    --ink:#F1ECE7; --muted:#A79E96; --faint:#7C736C; --line:#2C2622;
+    --accent:#E9727A; --accent-soft:#2A1817;
+    --ok:#5BC98A; --ok-tint:#14241B; --warn:#DDAA57; --warn-tint:#282011; --crit:#EE8177; --crit-tint:#2A1512;
+    --btn-bg:#F1ECE7; --btn-fg:#1A1512;
   }}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;font-size:15px}
-  .wrap{max-width:1040px;margin:0 auto;padding:clamp(18px,4vw,40px)}
-  a{color:var(--accent)}
-  header{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:24px}
-  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
-  h1{font-size:clamp(24px,4vw,34px);margin:.3em 0 .2em;letter-spacing:-.02em;font-weight:800}
-  .sub{color:var(--muted);margin:0;max-width:70ch}
-  .modelbar{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:13px;color:var(--muted)}
-  .modelbar code{font-family:var(--mono);color:var(--ink);background:var(--accent-tint);padding:1px 7px;border-radius:5px;font-size:12px}
-  h2{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:30px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
-  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
-  @media(max-width:620px){.tiles{grid-template-columns:repeat(2,1fr)}}
-  .tile{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 15px}
-  .tile .n{font-size:26px;font-weight:800;font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:1}
-  .tile .l{font-size:12px;color:var(--muted);margin-top:6px}
-  .tile.block .n{color:var(--crit)}.tile.review .n{color:var(--warn)}.tile.approve .n{color:var(--ok)}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  strong{font-weight:650}
+
+  /* ---- top app bar ---- */
+  .topbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--surface) 88%,transparent);
+          backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1080px;margin:0 auto;padding:11px clamp(16px,4vw,32px);
+             display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .mark{color:var(--accent);display:flex;flex:0 0 auto}
+  .brand-txt{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+  .brand-name{font-weight:650;font-size:15px;letter-spacing:-.01em}
+  .brand-sub{font-size:12px;color:var(--muted)}
+  .modelchip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap;justify-content:flex-end}
+  .modelchip strong{color:var(--ink);font-weight:600}
+  .modelchip .sep{color:var(--faint)}
+  .modelchip .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:0 0 auto;
+                  box-shadow:0 0 0 3px var(--ok-tint)}
+
+  /* ---- layout ---- */
+  .wrap{max-width:1080px;margin:0 auto;padding:clamp(20px,4vw,34px) clamp(16px,4vw,32px) 60px}
+  .lede{color:var(--muted);max-width:74ch;margin:0 0 30px;font-size:15px}
+  .lede strong{color:var(--ink)}
+  section.block{margin-bottom:30px}
+  .block-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+  h2{font-size:15px;font-weight:650;margin:0;letter-spacing:-.01em}
+  .block-head .count{margin-left:auto;font-size:13px;color:var(--muted)}
+  .block-head .count b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+  .muted-note{font-size:12.5px;color:var(--faint)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
   .scroll{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{padding:9px 12px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
-  th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;border-top:none;background:var(--bg);position:sticky;top:0}
-  td:first-child,th:first-child,td.l,th.l{text-align:left}
-  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-  .bar{display:inline-block;height:7px;border-radius:4px;background:var(--accent);vertical-align:middle;margin-left:7px}
-  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:100px}
-  .pill::before{content:"";width:6px;height:6px;border-radius:100px;background:currentColor}
-  .b-BLOCK{color:var(--crit);background:var(--crit-tint)}.b-REVIEW{color:var(--warn);background:var(--warn-tint)}.b-APPROVE{color:var(--ok);background:var(--ok-tint)}
-  form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
-  @media(max-width:620px){form{grid-template-columns:repeat(2,1fr)}}
-  label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
-  input,select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
-  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
-  .actions{grid-column:1/-1;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  button{font:inherit;font-weight:700;font-size:14px;padding:9px 18px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
-  button:hover{filter:brightness(.94)}
-  #manualOut{font-size:15px;font-weight:600}
-  .note{color:var(--muted);font-size:12.5px;margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
-  .status{color:var(--muted);padding:24px;text-align:center}
+
+  /* ---- summary ---- */
+  .summary{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+  .segbar{display:flex;height:9px;border-radius:5px;overflow:hidden;background:var(--surface-2);
+          border:1px solid var(--line)}
+  .seg{height:100%;transition:width .35s ease}
+  .seg.s-block{background:var(--crit)} .seg.s-review{background:var(--warn)} .seg.s-approve{background:var(--ok)}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:14px;font-size:13px;color:var(--muted)}
+  .lg{display:flex;align-items:center;gap:7px}
+  .lg b{color:var(--ink);font-weight:650;font-variant-numeric:tabular-nums}
+  .sw{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
+  .sw.s-block{background:var(--crit)} .sw.s-review{background:var(--warn)} .sw.s-approve{background:var(--ok)}
+
+  /* ---- table ---- */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600;
+           text-align:right;padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);
+           position:sticky;top:0;white-space:nowrap}
+  tbody td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:var(--surface-2)}
+  th.l,td.l{text-align:left}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px}
+  td.mono{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+
+  .risk{display:inline-flex;align-items:center;gap:9px;justify-content:flex-end}
+  .risk-track{width:76px;height:6px;border-radius:3px;background:var(--surface-2);
+              border:1px solid var(--line);overflow:hidden;flex:0 0 auto}
+  .risk-fill{display:block;height:100%}
+  .risk-fill.t-BLOCK{background:var(--crit)} .risk-fill.t-REVIEW{background:var(--warn)} .risk-fill.t-APPROVE{background:var(--ok)}
+  .risk-val{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+        padding:2px 9px;border-radius:5px;border:1px solid transparent;white-space:nowrap}
+  .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+  .b-BLOCK{color:var(--crit);background:var(--crit-tint);border-color:color-mix(in srgb,var(--crit) 22%,transparent)}
+  .b-REVIEW{color:var(--warn);background:var(--warn-tint);border-color:color-mix(in srgb,var(--warn) 22%,transparent)}
+  .b-APPROVE{color:var(--ok);background:var(--ok-tint);border-color:color-mix(in srgb,var(--ok) 22%,transparent)}
+
+  /* ---- manual form ---- */
+  form.card{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:18px}
+  @media(max-width:620px){form.card{grid-template-columns:repeat(2,1fr)}}
+  label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted);font-weight:500}
+  input,select{font:inherit;font-size:13.5px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+               background:var(--bg);color:var(--ink)}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .actions{grid-column:1/-1;display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+           border-top:1px solid var(--line);padding-top:16px;margin-top:2px}
+  button{font:inherit;font-weight:600;font-size:13.5px;padding:9px 20px;border:none;border-radius:6px;
+         background:var(--btn-bg);color:var(--btn-fg);cursor:pointer}
+  button:hover{filter:brightness(1.08)}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #manualOut{font-size:14px}
+  #manualOut b{font-weight:650}
+
+  .note{color:var(--muted);font-size:12.5px;line-height:1.7;margin:34px 0 0;border-top:1px solid var(--line);padding-top:16px}
+  .note code{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);border:1px solid var(--line);
+             padding:0 5px;border-radius:4px;color:var(--ink)}
+  .status{color:var(--muted);padding:48px 0;text-align:center}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="eyebrow">Business Analytics · Module 6 — live demo</div>
-    <h1>🛡️ Payment fraud — analyst review queue</h1>
-    <p class="sub">The deployed <strong>XGBoost Base</strong> model scores each transaction <strong>in your browser</strong>
-      and sorts a review queue by risk under a three-tier policy. No server, no data leaves the page —
-      the model tree ensemble runs client-side and matches the Python API to within 2&times;10<sup>&minus;7</sup>.</p>
-    <div class="modelbar" id="modelbar"><span>loading model…</span></div>
-  </header>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg width="22" height="24" viewBox="0 0 24 26" fill="none">
+          <path d="M12 1.5 20.5 4.6V12c0 5.6-3.7 9.6-8.5 11.4C7.2 21.6 3.5 17.6 3.5 12V4.6L12 1.5Z"
+                fill="currentColor" opacity=".12"/>
+          <path d="M12 1.5 20.5 4.6V12c0 5.6-3.7 9.6-8.5 11.4C7.2 21.6 3.5 17.6 3.5 12V4.6L12 1.5Z"
+                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8.3 12.3l2.7 2.7 4.9-5.1" stroke="currentColor" stroke-width="1.7"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="brand-txt">
+        <span class="brand-name">Fraud Review</span>
+        <span class="brand-sub">Payment monitoring &middot; Module 6</span>
+      </span>
+    </div>
+    <div class="modelchip" id="modelbar"><span>loading model&hellip;</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="lede">Each transaction is scored <strong>in your browser</strong> by the deployed XGBoost model and
+    triaged under a three-tier policy. The gradient-boosted tree ensemble runs entirely client-side &mdash; no
+    server, no data leaves the page &mdash; and matches the Python scoring API to within 2&times;10<sup>&minus;7</sup>.</p>
 
   <div id="app" hidden>
-    <h2>Queue summary</h2>
-    <div class="tiles">
-      <div class="tile"><div class="n" id="k_total">0</div><div class="l">transactions</div></div>
-      <div class="tile block"><div class="n" id="k_block">0</div><div class="l">⛔ auto-block</div></div>
-      <div class="tile review"><div class="n" id="k_review">0</div><div class="l">🔍 manual review</div></div>
-      <div class="tile approve"><div class="n" id="k_approve">0</div><div class="l">✅ auto-approve</div></div>
-    </div>
+    <section class="block">
+      <div class="block-head">
+        <h2>Queue summary</h2>
+        <span class="count"><b id="k_total">0</b> transactions</span>
+      </div>
+      <div class="summary">
+        <div class="segbar" role="img" aria-label="Decision distribution">
+          <span class="seg s-block" id="seg_block"></span>
+          <span class="seg s-review" id="seg_review"></span>
+          <span class="seg s-approve" id="seg_approve"></span>
+        </div>
+        <div class="legend">
+          <span class="lg"><span class="sw s-block"></span><b id="k_block">0</b>&nbsp;Auto-block</span>
+          <span class="lg"><span class="sw s-review"></span><b id="k_review">0</b>&nbsp;Manual review</span>
+          <span class="lg"><span class="sw s-approve"></span><b id="k_approve">0</b>&nbsp;Auto-approve</span>
+        </div>
+      </div>
+    </section>
 
-    <h2>Review queue — highest risk first</h2>
-    <div class="panel scroll">
-      <table>
-        <thead><tr>
-          <th class="l">Txn</th><th class="l">Type</th><th>Amount</th>
-          <th>Old bal (orig)</th><th>New bal (orig)</th><th>Fraud prob.</th><th class="l">Decision</th>
-        </tr></thead>
-        <tbody id="queue"></tbody>
-      </table>
-    </div>
+    <section class="block">
+      <div class="block-head">
+        <h2>Review queue</h2>
+        <span class="muted-note">Highest risk first</span>
+      </div>
+      <div class="card scroll">
+        <table>
+          <thead><tr>
+            <th class="l">Txn</th><th class="l">Type</th><th>Amount</th>
+            <th>Old bal. (orig)</th><th>New bal. (orig)</th><th>Fraud probability</th><th class="l">Decision</th>
+          </tr></thead>
+          <tbody id="queue"></tbody>
+        </table>
+      </div>
+    </section>
 
-    <h2>Score a transaction</h2>
-    <form id="manual">
-      <label>Type
-        <select id="m_type"><option>TRANSFER</option><option>CASH_OUT</option></select></label>
-      <label>Amount<input id="m_amount" type="number" step="any" value="181"></label>
-      <label>Old balance (origin)<input id="m_oo" type="number" step="any" value="181"></label>
-      <label>New balance (origin)<input id="m_no" type="number" step="any" value="0"></label>
-      <label>Old balance (dest)<input id="m_od" type="number" step="any" value="0"></label>
-      <label>New balance (dest)<input id="m_nd" type="number" step="any" value="0"></label>
-      <div class="actions"><button type="submit">Score</button><span id="manualOut"></span></div>
-    </form>
+    <section class="block">
+      <div class="block-head"><h2>Score a transaction</h2></div>
+      <form id="manual" class="card">
+        <label>Type
+          <select id="m_type"><option>TRANSFER</option><option>CASH_OUT</option></select></label>
+        <label>Amount<input id="m_amount" type="number" step="any" value="181"></label>
+        <label>Old balance (origin)<input id="m_oo" type="number" step="any" value="181"></label>
+        <label>New balance (origin)<input id="m_no" type="number" step="any" value="0"></label>
+        <label>Old balance (destination)<input id="m_od" type="number" step="any" value="0"></label>
+        <label>New balance (destination)<input id="m_nd" type="number" step="any" value="0"></label>
+        <div class="actions"><button type="submit">Score transaction</button><span id="manualOut"></span></div>
+      </form>
+    </section>
 
-    <p class="note">Deployed model: <strong>XGBoost Base</strong> (8 features; the page derives
-      <code>errorBalance*</code> and <code>type_TRANSFER</code> the same way the server does).
-      Policy: <em>approve</em> below <span id="n_thr"></span> ≤ <em>manual-review</em> below
-      <span id="n_blk"></span> ≤ <em>auto-block</em>. Fraud occurs only in TRANSFER / CASH_OUT.
-      Source &amp; full pipeline: <a href="https://github.com/namxle-hust/FraudDetectionBE">github.com/namxle-hust/FraudDetectionBE</a>.</p>
+    <p class="note">Deployed model: <strong>XGBoost Base</strong> (8 features). The page derives
+      <code>errorBalanceOrig</code>, <code>errorBalanceDest</code> and <code>type_TRANSFER</code> exactly the
+      way the server does. Policy: approve below <span id="n_thr"></span>, manual review up to
+      <span id="n_blk"></span>, auto-block above it. Fraud occurs only in TRANSFER / CASH_OUT transactions.
+      Source &amp; full pipeline on <a href="https://github.com/namxle-hust/FraudDetectionBE">GitHub</a>.</p>
   </div>
-  <div id="loading" class="status">Loading the model (~1.4 MB)…</div>
-</div>
+  <div id="loading" class="status">Loading the model (~1.4&nbsp;MB)&hellip;</div>
+</main>
 
 <script>
 const SAMPLES=[
@@ -133,21 +232,27 @@ function featurize(t){const a=+t.amount,oo=+t.oldbalanceOrg,no=+t.newbalanceOrig
 function score(t){let s=M.base_margin;const x=featurize(t);for(const tr of M.trees)s+=evalTree(tr,x);return 1/(1+Math.exp(-s));}
 function decide(p){return p>=M.block_threshold?"BLOCK":p>=M.threshold?"REVIEW":"APPROVE";}
 
+const LABEL={BLOCK:"Auto-block",REVIEW:"Manual review",APPROVE:"Auto-approve"};
 function render(){
   const scored=SAMPLES.map(t=>({...t,p:score(t)})).sort((a,b)=>b.p-a.p);
   const c={BLOCK:0,REVIEW:0,APPROVE:0};scored.forEach(t=>c[decide(t.p)]++);
+  const n=scored.length||1;
   k_total.textContent=scored.length;k_block.textContent=c.BLOCK;k_review.textContent=c.REVIEW;k_approve.textContent=c.APPROVE;
-  queue.innerHTML=scored.map(t=>{const d=decide(t.p);const pct=(t.p*100);
-    return `<tr><td class="l">${t.id}</td><td class="l">${t.type}</td><td class="num">${fmt(t.amount)}</td>
-      <td class="num">${fmt(t.oldbalanceOrg)}</td><td class="num">${fmt(t.newbalanceOrig)}</td>
-      <td class="num">${pct.toFixed(2)}%<span class="bar" style="width:${Math.max(2,pct*0.5)}px"></span></td>
-      <td class="l"><span class="pill b-${d}">${d}</span></td></tr>`;}).join("");
+  seg_block.style.width=(c.BLOCK/n*100)+"%";
+  seg_review.style.width=(c.REVIEW/n*100)+"%";
+  seg_approve.style.width=(c.APPROVE/n*100)+"%";
+  queue.innerHTML=scored.map(t=>{const d=decide(t.p);const pct=t.p*100;
+    return `<tr><td class="l mono">${t.id}</td><td class="l">${t.type}</td><td class="num">${fmt(+t.amount)}</td>
+      <td class="num">${fmt(+t.oldbalanceOrg)}</td><td class="num">${fmt(+t.newbalanceOrig)}</td>
+      <td><span class="risk"><span class="risk-track"><span class="risk-fill t-${d}" style="width:${Math.min(100,pct).toFixed(2)}%"></span></span><span class="risk-val">${pct.toFixed(2)}%</span></span></td>
+      <td class="l"><span class="pill b-${d}">${LABEL[d]}</span></td></tr>`;}).join("");
 }
 async function boot(){
   M=await (await fetch("model.json")).json();
   document.getElementById("modelbar").innerHTML=
-    `<span>Model <code>XGBoost Base</code></span><span><code>${M.features.length}</code> features · <code>${M.trees.length}</code> trees</span>`+
-    `<span>approve &lt; <code>${M.threshold}</code> ≤ review &lt; <code>${M.block_threshold}</code> ≤ block</span>`;
+    `<span class="dot"></span><span>Model <strong>XGBoost Base</strong></span>`+
+    `<span class="sep">&middot;</span><span>${M.features.length} features</span>`+
+    `<span class="sep">&middot;</span><span>${M.trees.length} trees</span>`;
   n_thr.textContent=M.threshold;n_blk.textContent=M.block_threshold;
   document.getElementById("loading").hidden=true;document.getElementById("app").hidden=false;
   render();
@@ -156,7 +261,7 @@ document.getElementById("manual").addEventListener("submit",e=>{
   e.preventDefault();
   const t={type:m_type.value,amount:m_amount.value,oldbalanceOrg:m_oo.value,newbalanceOrig:m_no.value,oldbalanceDest:m_od.value,newbalanceDest:m_nd.value};
   const p=score(t),d=decide(t.p=p);const col={BLOCK:"var(--crit)",REVIEW:"var(--warn)",APPROVE:"var(--ok)"}[d];
-  document.getElementById("manualOut").innerHTML=`<span style="color:${col}">${d}</span> — fraud probability <strong>${(p*100).toFixed(2)}%</strong>`;
+  document.getElementById("manualOut").innerHTML=`<span class="pill b-${d}">${LABEL[d]}</span> &nbsp;fraud probability <b>${(p*100).toFixed(2)}%</b>`;
 });
 boot().catch(e=>{document.getElementById("loading").textContent="Failed to load model: "+e;});
 </script>
