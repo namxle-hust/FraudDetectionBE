@@ -146,9 +146,9 @@
 </header>
 
 <main class="wrap">
-  <p class="lede">Each transaction is scored <strong>in your browser</strong> by the deployed XGBoost model and
-    triaged under a three-tier policy. The gradient-boosted tree ensemble runs entirely client-side &mdash; no
-    server, no data leaves the page &mdash; and matches the Python scoring API to within 2&times;10<sup>&minus;7</sup>.</p>
+  <p class="lede">A sample review queue scored by the deployed model and ranked by fraud probability, split
+    into three actions &mdash; auto-approve, manual review, auto-block. Scoring runs in your browser; you can
+    also score your own transaction below.</p>
 
   <div id="app" hidden>
     <section class="block">
@@ -202,8 +202,10 @@
 
     <p class="note">Deployed model: <strong>XGBoost Base</strong> (8 features). The page derives
       <code>errorBalanceOrig</code>, <code>errorBalanceDest</code> and <code>type_TRANSFER</code> exactly the
-      way the server does. Policy: approve below <span id="n_thr"></span>, manual review up to
-      <span id="n_blk"></span>, auto-block above it. Fraud occurs only in TRANSFER / CASH_OUT transactions.
+      way the server does, then evaluates the 300-tree ensemble in JavaScript &mdash; reproducing the Python
+      scoring API to within 2&times;10<sup>&minus;7</sup>, with no data leaving the page. Policy: approve below
+      <span id="n_thr"></span>, manual review up to <span id="n_blk"></span>, auto-block above it. Fraud occurs
+      only in TRANSFER / CASH_OUT transactions.
       Source &amp; full pipeline on <a href="https://github.com/namxle-hust/FraudDetectionBE">GitHub</a>.</p>
   </div>
   <div id="loading" class="status">Loading the model (~1.4&nbsp;MB)&hellip;</div>
