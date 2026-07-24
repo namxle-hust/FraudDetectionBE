@@ -164,6 +164,13 @@
              letter-spacing:-.02em}
   .stat .val.bad{color:var(--crit)} .stat .val.good{color:var(--ok)}
 
+  /* ---- timescale tags (live vs lagged) ---- */
+  .tl{font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:1px 6px;
+      border-radius:4px;vertical-align:middle;white-space:nowrap}
+  .tl-live{color:var(--ok);background:var(--ok-tint)}
+  .tl-lag{color:var(--warn);background:var(--warn-tint)}
+  h2 .tl{margin-left:8px}
+
   /* ---- monitoring: drift bars ---- */
   .psi{display:inline-flex;align-items:center;gap:9px;justify-content:flex-end}
   .psi-track{position:relative;width:88px;height:6px;border-radius:3px;background:var(--surface-2);
@@ -291,10 +298,13 @@
 
     <!-- ================= Module 7 — live monitoring ================= -->
     <div id="view_mon" role="tabpanel" aria-labelledby="tab_mon" hidden>
-      <p class="lede">A model in production degrades silently. This panel scores an arriving transaction feed with
-        the deployed model and monitors it live &mdash; distribution drift on every served feature, precision and
-        recall over rolling windows, and the retraining triggers that turn that evidence into a decision.
-        Switch the feed to <strong>degraded</strong> to inject an upstream ledger fault and watch the alarm fire.</p>
+      <p class="lede">A model in production degrades silently &mdash; and you find out in <strong>two stages, on two
+        clocks</strong>. <strong>Drift</strong> (section 1, live) is computable the moment a transaction arrives, from
+        its features alone, so it is the early warning. <strong>Performance</strong> &mdash; precision and recall
+        &mdash; needs the confirmed-fraud <em>label</em>, which in production arrives days-to-weeks later via
+        chargebacks; so it is shown as a <strong>lagged batch you reconcile on demand</strong>, not a live stream.
+        Switch the feed to <strong>degraded</strong>, watch drift react live, then <strong>reconcile labels</strong>
+        to confirm the hit.</p>
 
       <div id="m_boot" class="status">Priming the monitoring feed&hellip;</div>
       <div id="m_body" hidden>
@@ -326,11 +336,13 @@
           </div>
         </div>
         <div class="stats">
-          <div class="stat"><div class="lab">Features drifted</div><div class="val" id="m_ndrift">0 / 8</div></div>
-          <div class="stat"><div class="lab">Max PSI</div><div class="val" id="m_maxpsi">0.000</div></div>
-          <div class="stat"><div class="lab">Precision (latest)</div><div class="val" id="m_prec">&mdash;</div></div>
-          <div class="stat"><div class="lab">Recall (latest)</div><div class="val" id="m_rec">&mdash;</div></div>
+          <div class="stat"><div class="lab">Features drifted <span class="tl tl-live">live</span></div><div class="val" id="m_ndrift">0 / 8</div></div>
+          <div class="stat"><div class="lab">Max PSI <span class="tl tl-live">live</span></div><div class="val" id="m_maxpsi">0.000</div></div>
+          <div class="stat"><div class="lab">Min precision <span class="tl tl-lag">reconciled</span></div><div class="val" id="m_prec">&mdash;</div></div>
+          <div class="stat"><div class="lab">Min recall <span class="tl tl-lag">reconciled</span></div><div class="val" id="m_rec">&mdash;</div></div>
         </div>
+        <p class="muted-note" style="margin-top:8px">Drift metrics update live on the feed; precision / recall reflect the
+          last <strong>label reconciliation</strong> &mdash; the retrain decision combines the two.</p>
       </section>
 
       <section class="block">
@@ -356,13 +368,17 @@
 
       <section class="block">
         <div class="block-head">
-          <h2>2 &middot; Performance over time</h2>
-          <span class="muted-note">Rolling windows at threshold <span id="m_thr"></span></span>
+          <h2>2 &middot; Performance over time <span class="tl tl-lag">lagged &middot; needs labels</span></h2>
+          <span class="muted-note">Threshold <span id="m_thr"></span></span>
         </div>
         <div class="card">
+          <div class="feedbar" style="border-bottom:1px solid var(--line)">
+            <button id="m_reconcile" type="button">Reconcile labels</button>
+            <span class="muted-note" id="m_recinfo">labels not yet reconciled</span>
+          </div>
           <div class="chart">
             <svg id="m_chart" viewBox="0 0 720 210" preserveAspectRatio="none" role="img"
-                 aria-label="Rolling precision, recall and PR-AUC by time window"></svg>
+                 aria-label="Precision, recall and PR-AUC by window over the reconciled batch"></svg>
           </div>
           <div class="chart-legend">
             <span><i style="background:var(--ok)"></i>Recall</span>
@@ -371,11 +387,12 @@
             <span class="muted-note">dashed = trigger floor (recall 0.90, precision 0.20)</span>
           </div>
         </div>
-        <p class="note">The monitored period is the last <strong>7,200</strong> transactions, split into 12 equal
-          windows and re-scored at the deployed threshold as the feed advances. Triggers take the
-          <em>worst</em> window in that period, so an incident keeps the alarm up until it ages out of the
-          retained history &mdash; about 80 ticks, or roughly 72&nbsp;seconds of feed. <strong>Reset</strong>
-          clears it immediately.</p>
+        <p class="note">Precision and recall need the confirmed-fraud label, so &mdash; unlike drift above &mdash; this
+          panel is <strong>not live</strong>. Clicking <strong>Reconcile labels</strong> simulates a batch of matured
+          labels arriving: the last <strong>7,200</strong> transactions (now labelled) are split into 6 windows and
+          scored once at the deployed threshold. It stays fixed as the feed advances &mdash; the marker shows how far
+          the live feed has run <em>ahead</em> of the last reconciliation, which is exactly the label lag a real system
+          lives with. In production this batch would run automatically as labels mature (e.g. daily), not on a button.</p>
       </section>
 
       <section class="block">
@@ -395,15 +412,18 @@
         300-tree XGBoost Base ensemble evaluated in your browser &mdash; and the monitoring maths is a direct port
         of <code>monitoring/monitoring_core.py</code>, checked against the Python to 1&times;10<sup>&minus;9</sup>
         by <code>tests/test_web_monitoring_parity.py</code>.</p>
+      <p class="note"><strong>What is live vs lagged.</strong> Drift (section 1) runs on transaction <em>features</em>,
+        available immediately, so it is genuinely live &mdash; the real early-warning signal. Performance (section 2)
+        runs on <em>labels</em>, which lag by days-to-weeks, so it is a reconciled batch, not a live stream. Presenting
+        both on the same live clock would misstate how monitoring actually works; keeping them on separate clocks is
+        the point.</p>
       <p class="note"><strong>What is simulated.</strong> The feed itself. PaySim is a fixed dataset with no live
-        stream, and confirmed-fraud labels would in reality arrive days-to-weeks later via chargebacks, so
-        precision and recall could not be computed this promptly in production. Transactions are generated
-        PaySim-shaped &mdash; legit balances reconcile; fraud drains the origin account into a destination that
-        never credits it, leaving <code>errorBalanceDest</code> equal to the amount. The fraud rate is held at 1%
-        across both regimes, above PaySim's post-filter 0.296%, so the rolling windows collect enough positives to
-        read in seconds. The degraded regime raises amounts and stops the destination ledger reconciling on
-        ordinary traffic &mdash; the same footprint the model learnt to treat as fraud, which is why precision
-        collapses while recall holds.</p>
+        stream. Transactions are generated PaySim-shaped &mdash; legit balances reconcile; fraud drains the origin
+        account into a destination that never credits it, leaving <code>errorBalanceDest</code> equal to the amount.
+        The fraud rate is held at 1% across both regimes, above PaySim's post-filter 0.296%, so a reconciled batch
+        carries enough positives for stable precision / recall. The degraded regime raises amounts and stops the
+        destination ledger reconciling on ordinary traffic &mdash; the same footprint the model learnt to treat as
+        fraud, which is why precision collapses while recall holds.</p>
       </div>
     </div>
   </div>
@@ -449,19 +469,24 @@ function render(){
       <td class="l"><span class="pill b-${d}">${LABEL[d]}</span></td></tr>`;}).join("");
 }
 
-/* ============================ Module 7 — live monitoring ============================ */
+/* ============================ Module 7 — monitoring ============================ *
+ * Two timescales, deliberately kept apart:
+ *   - Drift (PSI/KS) runs on transaction FEATURES, available at scoring time -> LIVE,
+ *     recomputed every tick as the feed advances.
+ *   - Performance (precision/recall/PR-AUC) needs the confirmed-fraud LABEL, which lags
+ *     by days-to-weeks in production -> a BATCH reconciled on demand, not a live stream.
+ * The retrain verdict combines the live drift with the most recent reconciled batch. */
 const MON={
   REF_N:4000,       // reference window, drawn once from steady traffic
-  CUR_N:3000,       // sliding "current" window the drift report compares against
-  MAX_STREAM:7200,  // retained monitored period; held at capacity so the 12 rolling
-                    // windows stay a constant 600 rows and the metrics don't jitter.
-                    // At 90 txn/tick it turns over in 80 ticks (~72 s).
+  CUR_N:3000,       // sliding "current" window the live drift report compares against
+  MAX_STREAM:7200,  // retained monitored period (held at capacity)
   BATCH:90,         // transactions per tick
   TICK_MS:900,
-  N_WINDOWS:12,
+  N_WINDOWS:6,      // windows for the reconciled performance batch (1200 rows each ->
+                    // ~12 frauds/window, enough that per-window precision is stable)
 };
 const mon={stream:null,reference:null,refPrAuc:NaN,rows:[],regime:"steady",n:0,
-           timer:null,running:false,primed:false};
+           timer:null,running:false,primed:false,reconciled:null};
 
 function drawScored(regime,step){
   const t=mon.stream.draw(regime,step);
@@ -472,7 +497,7 @@ function drawScored(regime,step){
 
 function monReset(){
   mon.stream=FraudMon.makeStream(7);
-  mon.n=0; mon.rows=[]; mon.regime="steady";
+  mon.n=0; mon.rows=[]; mon.regime="steady"; mon.reconciled=null;
   m_steady.setAttribute("aria-pressed","true");
   m_degraded.setAttribute("aria-pressed","false");
   // reference window: what the model was trained to expect
@@ -480,52 +505,47 @@ function monReset(){
   for(let i=0;i<MON.REF_N;i++) mon.reference.push(drawScored("steady",-MON.REF_N+i));
   mon.refPrAuc=FraudMon.averagePrecision(
     mon.reference.map(r=>r.isFraud), mon.reference.map(r=>r.score));
-  // fill the monitored period to capacity, so every rolling window is the same size
-  // from the first frame (a stream still growing gives jittery per-window metrics)
+  // fill the monitored period to capacity so the first batch is full-size
   for(let i=0;i<MON.MAX_STREAM;i++){mon.rows.push(drawScored("steady",mon.n++));}
   mon.primed=true;
-  monRender();
+  reconcile();     // a baseline reconciliation on the steady batch
+  renderLive();
 }
 
 function monTick(){
   for(let i=0;i<MON.BATCH;i++) mon.rows.push(drawScored(mon.regime,mon.n++));
   if(mon.rows.length>MON.MAX_STREAM) mon.rows.splice(0,mon.rows.length-MON.MAX_STREAM);
-  monRender();
+  renderLive();          // drift + verdict update live
+  updateReconcileInfo(); // grow the "labels pending" lag marker (no recompute)
+}
+
+/* Simulate a batch of matured labels arriving: score the (now-labelled) retained
+ * stream once. In production this would fire automatically as labels mature. */
+function reconcile(){
+  const perf=FraudMon.rollingPerformance(
+    mon.rows,"step","isFraud","score",M.threshold,MON.N_WINDOWS);
+  mon.reconciled={perf,atN:mon.n};
+  renderPerf();
+  renderVerdict();      // the verdict's performance side depends on this batch
+  updateReconcileInfo();
 }
 
 const TRIG=FraudMon.DEFAULT_TRIGGERS;
 const n3=v=>Number.isFinite(v)?v.toFixed(3):"—";
 
-function monRender(){
-  const cur=mon.rows.slice(-MON.CUR_N);
-  const drift=FraudMon.driftReport(mon.reference,cur,M.features);
-  const perf=FraudMon.rollingPerformance(mon.rows,"step","isFraud","score",M.threshold,MON.N_WINDOWS);
-  const trig=FraudMon.evaluateTriggers(drift,perf,mon.refPrAuc);
-  const last=perf.length?perf[perf.length-1]:null;
-
+/* live layer: drift table + drift stats + verdict (drift changes every tick) */
+function renderLive(){
   m_scored.textContent=fmt0(mon.n);
+  const drift=FraudMon.driftReport(mon.reference,mon.rows.slice(-MON.CUR_N),M.features);
+  mon._drift=drift;
 
-  // ---- verdict ----
-  const bad=trig.retrain_recommended;
-  m_verdict.className="verdict "+(bad?"v-retrain":"v-hold");
-  m_vmark.innerHTML=bad?"&#9888;":"&#10003;";
-  m_vtitle.textContent=bad?"Retrain recommended":"Model healthy — no retrain trigger fired";
-  m_reasons.innerHTML=(trig.reasons.length?trig.reasons:["All monitored metrics within thresholds."])
-    .map(r=>`<li>${r}</li>`).join("");
-
-  // ---- headline stats ----
   const nDrift=drift.filter(d=>d.drifted).length;
   const maxPsi=Math.max.apply(null,drift.map(d=>Number.isFinite(d.psi)?d.psi:0));
   m_ndrift.textContent=`${nDrift} / ${drift.length}`;
   m_ndrift.className="val"+(nDrift>=TRIG.n_features_drifted?" bad":"");
   m_maxpsi.textContent=n3(maxPsi);
   m_maxpsi.className="val"+(maxPsi>TRIG.psi_significant?" bad":"");
-  m_prec.textContent=last?n3(last.precision):"—";
-  m_prec.className="val"+(last?(last.precision<TRIG.precision_floor?" bad":" good"):"");
-  m_rec.textContent=last?n3(last.recall):"—";
-  m_rec.className="val"+(last?(last.recall<TRIG.recall_floor?" bad":" good"):"");
 
-  // ---- drift table ----
   m_drift.innerHTML=drift.map(d=>{
     const pct=Math.min(100,(Number.isFinite(d.psi)?d.psi:0)/0.5*100);
     const over=d.psi>TRIG.psi_significant;
@@ -538,24 +558,62 @@ function monRender(){
       <td class="l"><span class="pill b-${d.drifted?"BLOCK":"APPROVE"}">${d.drifted?"Drifted":"Stable"}</span></td>
     </tr>`;}).join("");
 
-  // ---- trigger table ----
+  renderVerdict();
+}
+
+/* lagged layer: precision/recall stats + chart, from the last reconciled batch */
+function renderPerf(){
+  const perf=mon.reconciled?mon.reconciled.perf:[];
+  const minPrec=perf.length?Math.min.apply(null,perf.map(p=>p.precision)):NaN;
+  const minRec=perf.length?Math.min.apply(null,perf.map(p=>p.recall)):NaN;
+  m_prec.textContent=n3(minPrec);
+  m_prec.className="val"+(perf.length?(minPrec<TRIG.precision_floor?" bad":" good"):"");
+  m_rec.textContent=n3(minRec);
+  m_rec.className="val"+(perf.length?(minRec<TRIG.recall_floor?" bad":" good"):"");
+  drawChart(perf);
+}
+
+/* verdict + trigger table: live drift combined with the last reconciled performance */
+function renderVerdict(){
+  const drift=mon._drift||[];
+  const perf=mon.reconciled?mon.reconciled.perf:[];
+  const trig=FraudMon.evaluateTriggers(drift,perf,mon.refPrAuc);
+
+  const bad=trig.retrain_recommended;
+  m_verdict.className="verdict "+(bad?"v-retrain":"v-hold");
+  m_vmark.innerHTML=bad?"&#9888;":"&#10003;";
+  m_vtitle.textContent=bad?"Retrain recommended":"Model healthy — no retrain trigger fired";
+  const reasons=trig.reasons.slice();
+  if(!perf.length) reasons.push("Performance side pending — reconcile labels to evaluate precision / recall.");
+  m_reasons.innerHTML=(reasons.length?reasons:["All monitored metrics within thresholds."])
+    .map(r=>`<li>${r}</li>`).join("");
+
+  const nDrift=drift.filter(d=>d.drifted).length;
+  const maxPsi=drift.length?Math.max.apply(null,drift.map(d=>Number.isFinite(d.psi)?d.psi:0)):NaN;
   const minRec=perf.length?Math.min.apply(null,perf.map(p=>p.recall)):NaN;
   const minPrec=perf.length?Math.min.apply(null,perf.map(p=>p.precision)):NaN;
   const prs=perf.map(p=>p.pr_auc).filter(v=>Number.isFinite(v));
   const minPr=prs.length?Math.min.apply(null,prs):NaN;
+  const dash="—";
   const rows=[
-    ["Max PSI",`> ${TRIG.psi_significant}`,n3(maxPsi),maxPsi>TRIG.psi_significant],
-    ["Features drifted",`≥ ${TRIG.n_features_drifted}`,String(nDrift),nDrift>=TRIG.n_features_drifted],
-    ["Rolling recall floor",`< ${TRIG.recall_floor}`,n3(minRec),minRec<TRIG.recall_floor],
-    ["Rolling precision floor",`< ${TRIG.precision_floor}`,n3(minPrec),minPrec<TRIG.precision_floor],
-    ["PR-AUC drop vs reference",`> ${TRIG.pr_auc_drop}`,n3(mon.refPrAuc-minPr),(mon.refPrAuc-minPr)>TRIG.pr_auc_drop],
+    ["Max PSI","live",`> ${TRIG.psi_significant}`,n3(maxPsi),maxPsi>TRIG.psi_significant],
+    ["Features drifted","live",`≥ ${TRIG.n_features_drifted}`,String(nDrift),nDrift>=TRIG.n_features_drifted],
+    ["Recall floor","reconciled",`< ${TRIG.recall_floor}`,perf.length?n3(minRec):dash,perf.length&&minRec<TRIG.recall_floor],
+    ["Precision floor","reconciled",`< ${TRIG.precision_floor}`,perf.length?n3(minPrec):dash,perf.length&&minPrec<TRIG.precision_floor],
+    ["PR-AUC drop vs reference","reconciled",`> ${TRIG.pr_auc_drop}`,perf.length?n3(mon.refPrAuc-minPr):dash,perf.length&&(mon.refPrAuc-minPr)>TRIG.pr_auc_drop],
   ];
-  m_triggers.innerHTML=rows.map(([lab,thr,val,fired])=>`<tr>
-      <td class="l">${lab}</td><td class="num">${thr}</td><td class="num">${val}</td>
+  m_triggers.innerHTML=rows.map(([lab,clock,thr,val,fired])=>`<tr>
+      <td class="l">${lab} <span class="tl tl-${clock==="live"?"live":"lag"}">${clock}</span></td>
+      <td class="num">${thr}</td><td class="num">${val}</td>
       <td class="l"><span class="pill b-${fired?"BLOCK":"APPROVE"}">${fired?"Fired":"Clear"}</span></td>
     </tr>`).join("");
+}
 
-  drawChart(perf);
+function updateReconcileInfo(){
+  if(!mon.reconciled){m_recinfo.textContent="labels not yet reconciled";return;}
+  const ahead=mon.n-mon.reconciled.atN;
+  m_recinfo.innerHTML=`reconciled through <b>${fmt0(mon.reconciled.atN)}</b> txns`+
+    (ahead>0?` &middot; live feed <b>+${fmt0(ahead)}</b> ahead (labels pending)`:` &middot; up to date`);
 }
 
 function drawChart(perf){
@@ -634,6 +692,7 @@ tab_queue.addEventListener("click",()=>showView("queue"));
 tab_mon.addEventListener("click",()=>showView("mon"));
 m_toggle.addEventListener("click",()=>setRunning(!mon.running));
 m_reset.addEventListener("click",()=>{monReset();});
+m_reconcile.addEventListener("click",()=>{reconcile();});
 m_steady.addEventListener("click",()=>setRegime("steady"));
 m_degraded.addEventListener("click",()=>setRegime("degraded"));
 boot().catch(e=>{document.getElementById("loading").textContent="Failed to load model: "+e;});
