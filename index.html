@@ -46,6 +46,16 @@
   .modelchip .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:0 0 auto;
                   box-shadow:0 0 0 3px var(--ok-tint)}
 
+  /* ---- view tabs ---- */
+  .tabs{border-bottom:1px solid var(--line);background:var(--surface)}
+  .tabs-in{max-width:1080px;margin:0 auto;padding:0 clamp(16px,4vw,32px);display:flex;gap:4px}
+  .tab{appearance:none;background:none;border:none;border-bottom:2px solid transparent;
+       font:inherit;font-size:13.5px;font-weight:600;color:var(--muted);
+       padding:11px 14px;cursor:pointer;margin-bottom:-1px}
+  .tab:hover{color:var(--ink)}
+  .tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;border-radius:4px}
+
   /* ---- layout ---- */
   .wrap{max-width:1080px;margin:0 auto;padding:clamp(20px,4vw,34px) clamp(16px,4vw,32px) 60px}
   .lede{color:var(--muted);max-width:74ch;margin:0 0 30px;font-size:15px}
@@ -114,9 +124,69 @@
   #manualOut{font-size:14px}
   #manualOut b{font-weight:650}
 
+  /* ---- monitoring: feed control ---- */
+  .feedbar{display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px;padding:14px 18px}
+  .feedbar .grow{flex:1 1 auto}
+  .btn-quiet{background:none;color:var(--ink);border:1px solid var(--line);padding:8px 15px}
+  .btn-quiet:hover{background:var(--surface-2);filter:none}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+        font-variant-numeric:tabular-nums}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:0 0 auto;
+             box-shadow:0 0 0 3px var(--ok-tint)}
+  .live.paused .dot{background:var(--faint);box-shadow:0 0 0 3px var(--line);animation:none}
+  @media (prefers-reduced-motion:no-preference){
+    .live .dot{animation:pulse 1.6s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  }
+  .seg-ctl{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg-ctl button{background:var(--surface);color:var(--muted);border:none;border-radius:0;
+                  padding:8px 14px;font-size:13px;font-weight:600}
+  .seg-ctl button+button{border-left:1px solid var(--line)}
+  .seg-ctl button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+  .seg-ctl button:hover{filter:none;color:var(--ink)}
+
+  /* ---- monitoring: verdict + stats ---- */
+  .verdict{display:flex;align-items:flex-start;gap:13px;padding:15px 18px;border-radius:var(--radius);
+           border:1px solid transparent;margin-bottom:14px}
+  .verdict .vmark{font-size:15px;line-height:1.4;flex:0 0 auto;font-weight:700}
+  .verdict .vtitle{font-weight:650;font-size:14.5px}
+  .verdict ul{margin:7px 0 0;padding-left:18px;font-size:13px;line-height:1.65}
+  .verdict.v-hold{background:var(--ok-tint);border-color:color-mix(in srgb,var(--ok) 26%,transparent);color:var(--ok)}
+  .verdict.v-retrain{background:var(--crit-tint);border-color:color-mix(in srgb,var(--crit) 26%,transparent);color:var(--crit)}
+  .verdict .vbody{color:var(--ink)}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+         border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--surface);padding:13px 16px}
+  .stat .lab{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .stat .val{font-family:var(--mono);font-size:19px;font-variant-numeric:tabular-nums;margin-top:3px;
+             letter-spacing:-.02em}
+  .stat .val.bad{color:var(--crit)} .stat .val.good{color:var(--ok)}
+
+  /* ---- monitoring: drift bars ---- */
+  .psi{display:inline-flex;align-items:center;gap:9px;justify-content:flex-end}
+  .psi-track{position:relative;width:88px;height:6px;border-radius:3px;background:var(--surface-2);
+             border:1px solid var(--line);overflow:hidden;flex:0 0 auto}
+  .psi-fill{display:block;height:100%;background:var(--ok)}
+  .psi-fill.over{background:var(--crit)}
+  .psi-val{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;min-width:46px;text-align:right}
+
+  /* ---- monitoring: chart ---- */
+  .chart{padding:16px 18px 10px}
+  .chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart .axis{stroke:var(--line);stroke-width:1}
+  .chart .floor{stroke-dasharray:4 4;stroke-width:1;opacity:.75}
+  .chart text{font-family:var(--sans);font-size:10.5px;fill:var(--muted)}
+  .chart-legend{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:12.5px;color:var(--muted);
+                padding:4px 18px 14px}
+  .chart-legend span{display:inline-flex;align-items:center;gap:7px}
+  .chart-legend i{width:14px;height:3px;border-radius:2px;display:block}
+
   .note{color:var(--muted);font-size:12.5px;line-height:1.7;margin:34px 0 0;border-top:1px solid var(--line);padding-top:16px}
   .note code{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);border:1px solid var(--line);
              padding:0 5px;border-radius:4px;color:var(--ink)}
+  .note+.note{margin-top:14px;border-top:none;padding-top:0}
   .status{color:var(--muted);padding:48px 0;text-align:center}
 
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -138,79 +208,209 @@
       </span>
       <span class="brand-txt">
         <span class="brand-name">Fraud Review</span>
-        <span class="brand-sub">Payment monitoring &middot; Module 6</span>
+        <span class="brand-sub">Payment monitoring &middot; Modules 6&ndash;7</span>
       </span>
     </div>
     <div class="modelchip" id="modelbar"><span>loading model&hellip;</span></div>
   </div>
 </header>
 
+<nav class="tabs" role="tablist" aria-label="Views">
+  <div class="tabs-in">
+    <button class="tab" id="tab_queue" role="tab" aria-selected="true" aria-controls="view_queue">Review queue</button>
+    <button class="tab" id="tab_mon" role="tab" aria-selected="false" aria-controls="view_mon">Live monitoring</button>
+  </div>
+</nav>
+
 <main class="wrap">
-  <p class="lede">A sample review queue scored by the deployed model and ranked by fraud probability, split
-    into three actions &mdash; auto-approve, manual review, auto-block. Scoring runs in your browser; you can
-    also score your own transaction below.</p>
-
   <div id="app" hidden>
-    <section class="block">
-      <div class="block-head">
-        <h2>Queue summary</h2>
-        <span class="count"><b id="k_total">0</b> transactions</span>
-      </div>
-      <div class="summary">
-        <div class="segbar" role="img" aria-label="Decision distribution">
-          <span class="seg s-block" id="seg_block"></span>
-          <span class="seg s-review" id="seg_review"></span>
-          <span class="seg s-approve" id="seg_approve"></span>
+
+    <!-- ================= Module 6 — review queue ================= -->
+    <div id="view_queue" role="tabpanel" aria-labelledby="tab_queue">
+      <p class="lede">A sample review queue scored by the deployed model and ranked by fraud probability, split
+        into three actions &mdash; auto-approve, manual review, auto-block. Scoring runs in your browser; you can
+        also score your own transaction below.</p>
+
+      <section class="block">
+        <div class="block-head">
+          <h2>Queue summary</h2>
+          <span class="count"><b id="k_total">0</b> transactions</span>
         </div>
-        <div class="legend">
-          <span class="lg"><span class="sw s-block"></span><b id="k_block">0</b>&nbsp;Auto-block</span>
-          <span class="lg"><span class="sw s-review"></span><b id="k_review">0</b>&nbsp;Manual review</span>
-          <span class="lg"><span class="sw s-approve"></span><b id="k_approve">0</b>&nbsp;Auto-approve</span>
+        <div class="summary">
+          <div class="segbar" role="img" aria-label="Decision distribution">
+            <span class="seg s-block" id="seg_block"></span>
+            <span class="seg s-review" id="seg_review"></span>
+            <span class="seg s-approve" id="seg_approve"></span>
+          </div>
+          <div class="legend">
+            <span class="lg"><span class="sw s-block"></span><b id="k_block">0</b>&nbsp;Auto-block</span>
+            <span class="lg"><span class="sw s-review"></span><b id="k_review">0</b>&nbsp;Manual review</span>
+            <span class="lg"><span class="sw s-approve"></span><b id="k_approve">0</b>&nbsp;Auto-approve</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="block">
-      <div class="block-head">
-        <h2>Review queue</h2>
-        <span class="muted-note">Highest risk first</span>
-      </div>
-      <div class="card scroll">
-        <table>
-          <thead><tr>
-            <th class="l">Txn</th><th class="l">Type</th><th>Amount</th>
-            <th>Old bal. (orig)</th><th>New bal. (orig)</th><th>Fraud probability</th><th class="l">Decision</th>
-          </tr></thead>
-          <tbody id="queue"></tbody>
-        </table>
-      </div>
-    </section>
+      <section class="block">
+        <div class="block-head">
+          <h2>Review queue</h2>
+          <span class="muted-note">Highest risk first</span>
+        </div>
+        <div class="card scroll">
+          <table>
+            <thead><tr>
+              <th class="l">Txn</th><th class="l">Type</th><th>Amount</th>
+              <th>Old bal. (orig)</th><th>New bal. (orig)</th><th>Fraud probability</th><th class="l">Decision</th>
+            </tr></thead>
+            <tbody id="queue"></tbody>
+          </table>
+        </div>
+      </section>
 
-    <section class="block">
-      <div class="block-head"><h2>Score a transaction</h2></div>
-      <form id="manual" class="card">
-        <label>Type
-          <select id="m_type"><option>TRANSFER</option><option>CASH_OUT</option></select></label>
-        <label>Amount<input id="m_amount" type="number" step="any" value="181"></label>
-        <label>Old balance (origin)<input id="m_oo" type="number" step="any" value="181"></label>
-        <label>New balance (origin)<input id="m_no" type="number" step="any" value="0"></label>
-        <label>Old balance (destination)<input id="m_od" type="number" step="any" value="0"></label>
-        <label>New balance (destination)<input id="m_nd" type="number" step="any" value="0"></label>
-        <div class="actions"><button type="submit">Score transaction</button><span id="manualOut"></span></div>
-      </form>
-    </section>
+      <section class="block">
+        <div class="block-head"><h2>Score a transaction</h2></div>
+        <form id="manual" class="card">
+          <label>Type
+            <select id="m_type"><option>TRANSFER</option><option>CASH_OUT</option></select></label>
+          <label>Amount<input id="m_amount" type="number" step="any" value="181"></label>
+          <label>Old balance (origin)<input id="m_oo" type="number" step="any" value="181"></label>
+          <label>New balance (origin)<input id="m_no" type="number" step="any" value="0"></label>
+          <label>Old balance (destination)<input id="m_od" type="number" step="any" value="0"></label>
+          <label>New balance (destination)<input id="m_nd" type="number" step="any" value="0"></label>
+          <div class="actions"><button type="submit">Score transaction</button><span id="manualOut"></span></div>
+        </form>
+      </section>
 
-    <p class="note">Deployed model: <strong>XGBoost Base</strong> (8 features). The page derives
-      <code>errorBalanceOrig</code>, <code>errorBalanceDest</code> and <code>type_TRANSFER</code> exactly the
-      way the server does, then evaluates the 300-tree ensemble in JavaScript &mdash; reproducing the Python
-      scoring API to within 2&times;10<sup>&minus;7</sup>, with no data leaving the page. Policy: approve below
-      <span id="n_thr"></span>, manual review up to <span id="n_blk"></span>, auto-block above it. Fraud occurs
-      only in TRANSFER / CASH_OUT transactions.
-      Source &amp; full pipeline on <a href="https://github.com/namxle-hust/FraudDetectionBE">GitHub</a>.</p>
+      <p class="note">Deployed model: <strong>XGBoost Base</strong> (8 features). The page derives
+        <code>errorBalanceOrig</code>, <code>errorBalanceDest</code> and <code>type_TRANSFER</code> exactly the
+        way the server does, then evaluates the 300-tree ensemble in JavaScript &mdash; reproducing the Python
+        scoring API to within 2&times;10<sup>&minus;7</sup>, with no data leaving the page. Policy: approve below
+        <span id="n_thr"></span>, manual review up to <span id="n_blk"></span>, auto-block above it. Fraud occurs
+        only in TRANSFER / CASH_OUT transactions.
+        Source &amp; full pipeline on <a href="https://github.com/namxle-hust/FraudDetectionBE">GitHub</a>.</p>
+    </div>
+
+    <!-- ================= Module 7 — live monitoring ================= -->
+    <div id="view_mon" role="tabpanel" aria-labelledby="tab_mon" hidden>
+      <p class="lede">A model in production degrades silently. This panel scores an arriving transaction feed with
+        the deployed model and monitors it live &mdash; distribution drift on every served feature, precision and
+        recall over rolling windows, and the retraining triggers that turn that evidence into a decision.
+        Switch the feed to <strong>degraded</strong> to inject an upstream ledger fault and watch the alarm fire.</p>
+
+      <div id="m_boot" class="status">Priming the monitoring feed&hellip;</div>
+      <div id="m_body" hidden>
+
+      <section class="block">
+        <div class="block-head">
+          <h2>Transaction feed</h2>
+          <span class="count"><b id="m_scored">0</b> scored</span>
+        </div>
+        <div class="card feedbar">
+          <button id="m_toggle" type="button">Pause feed</button>
+          <div class="seg-ctl" role="group" aria-label="Feed regime">
+            <button id="m_steady" type="button" aria-pressed="true">Steady</button>
+            <button id="m_degraded" type="button" aria-pressed="false">Degraded ledger</button>
+          </div>
+          <button id="m_reset" type="button" class="btn-quiet">Reset</button>
+          <span class="grow"></span>
+          <span class="live" id="m_live"><span class="dot"></span><span id="m_livetxt">live</span></span>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="block-head"><h2>Retraining decision</h2></div>
+        <div class="verdict v-hold" id="m_verdict">
+          <span class="vmark" id="m_vmark">&#10003;</span>
+          <div class="vbody">
+            <div class="vtitle" id="m_vtitle">Model healthy &mdash; no retrain trigger fired</div>
+            <ul id="m_reasons"><li>All monitored metrics within thresholds.</li></ul>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="lab">Features drifted</div><div class="val" id="m_ndrift">0 / 8</div></div>
+          <div class="stat"><div class="lab">Max PSI</div><div class="val" id="m_maxpsi">0.000</div></div>
+          <div class="stat"><div class="lab">Precision (latest)</div><div class="val" id="m_prec">&mdash;</div></div>
+          <div class="stat"><div class="lab">Recall (latest)</div><div class="val" id="m_rec">&mdash;</div></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="block-head">
+          <h2>1 &middot; Data drift</h2>
+          <span class="muted-note">Current window vs reference</span>
+        </div>
+        <div class="card scroll">
+          <table>
+            <thead><tr>
+              <th class="l">Feature</th><th>PSI</th><th>KS stat</th>
+              <th>Reference mean</th><th>Current mean</th><th class="l">Status</th>
+            </tr></thead>
+            <tbody id="m_drift"></tbody>
+          </table>
+        </div>
+        <p class="note">Flagged when <code>PSI &gt; 0.20</code> <em>or</em> <code>KS stat &gt; 0.10</code>. Both are
+          effect sizes. The KS <em>p&#8209;value</em> is deliberately not used: at these sample sizes it rejects on
+          any negligible difference, so a p&#8209;value rule would flag every feature every window. The two measures
+          are complementary &mdash; on a feature whose reference mass sits almost entirely at zero, the decile bins
+          collapse and PSI goes blind, but KS still sees the shift.</p>
+      </section>
+
+      <section class="block">
+        <div class="block-head">
+          <h2>2 &middot; Performance over time</h2>
+          <span class="muted-note">Rolling windows at threshold <span id="m_thr"></span></span>
+        </div>
+        <div class="card">
+          <div class="chart">
+            <svg id="m_chart" viewBox="0 0 720 210" preserveAspectRatio="none" role="img"
+                 aria-label="Rolling precision, recall and PR-AUC by time window"></svg>
+          </div>
+          <div class="chart-legend">
+            <span><i style="background:var(--ok)"></i>Recall</span>
+            <span><i style="background:var(--warn)"></i>Precision</span>
+            <span><i style="background:var(--accent)"></i>PR-AUC</span>
+            <span class="muted-note">dashed = trigger floor (recall 0.90, precision 0.20)</span>
+          </div>
+        </div>
+        <p class="note">The monitored period is the last <strong>7,200</strong> transactions, split into 12 equal
+          windows and re-scored at the deployed threshold as the feed advances. Triggers take the
+          <em>worst</em> window in that period, so an incident keeps the alarm up until it ages out of the
+          retained history &mdash; about 80 ticks, or roughly 72&nbsp;seconds of feed. <strong>Reset</strong>
+          clears it immediately.</p>
+      </section>
+
+      <section class="block">
+        <div class="block-head">
+          <h2>3 &middot; Retraining triggers</h2>
+          <span class="muted-note">Fire on any one</span>
+        </div>
+        <div class="card scroll">
+          <table>
+            <thead><tr><th class="l">Signal</th><th>Threshold</th><th>Current</th><th class="l">Status</th></tr></thead>
+            <tbody id="m_triggers"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="note"><strong>What is real here.</strong> The scoring is the real deployed model &mdash; the same
+        300-tree XGBoost Base ensemble evaluated in your browser &mdash; and the monitoring maths is a direct port
+        of <code>monitoring/monitoring_core.py</code>, checked against the Python to 1&times;10<sup>&minus;9</sup>
+        by <code>tests/test_web_monitoring_parity.py</code>.</p>
+      <p class="note"><strong>What is simulated.</strong> The feed itself. PaySim is a fixed dataset with no live
+        stream, and confirmed-fraud labels would in reality arrive days-to-weeks later via chargebacks, so
+        precision and recall could not be computed this promptly in production. Transactions are generated
+        PaySim-shaped &mdash; legit balances reconcile; fraud drains the origin account into a destination that
+        never credits it, leaving <code>errorBalanceDest</code> equal to the amount. The fraud rate is held at 1%
+        across both regimes, above PaySim's post-filter 0.296%, so the rolling windows collect enough positives to
+        read in seconds. The degraded regime raises amounts and stops the destination ledger reconciling on
+        ordinary traffic &mdash; the same footprint the model learnt to treat as fraud, which is why precision
+        collapses while recall holds.</p>
+      </div>
+    </div>
   </div>
   <div id="loading" class="status">Loading the model (~1.4&nbsp;MB)&hellip;</div>
 </main>
 
+<script src="monitoring.js"></script>
 <script>
 const SAMPLES=[
  {id:"T1",type:"TRANSFER",amount:181,oldbalanceOrg:181,newbalanceOrig:0,oldbalanceDest:0,newbalanceDest:0},
@@ -226,11 +426,10 @@ const SAMPLES=[
 ];
 let M=null;
 const fmt=n=>n.toLocaleString(undefined,{maximumFractionDigits:2});
+const fmt0=n=>n.toLocaleString(undefined,{maximumFractionDigits:0});
 function fidx(s){const i=M.features.indexOf(s);return i>=0?i:parseInt(s.slice(1));}
 function evalTree(node,x){while(!('leaf'in node)){const f=fidx(node.split);const go=x[f]<node.split_condition?node.yes:node.no;node=node.children.find(c=>c.nodeid===go);}return node.leaf;}
-function featurize(t){const a=+t.amount,oo=+t.oldbalanceOrg,no=+t.newbalanceOrig,od=+t.oldbalanceDest,nd=+t.newbalanceDest;
-  const r={amount:a,oldbalanceOrg:oo,newbalanceOrig:no,oldbalanceDest:od,newbalanceDest:nd,errorBalanceOrig:no+a-oo,errorBalanceDest:od+a-nd,type_TRANSFER:t.type==="TRANSFER"?1:0};
-  return M.features.map(f=>r[f]);}
+function featurize(t){const r=FraudMon.featurize(t);return M.features.map(f=>r[f]);}
 function score(t){let s=M.base_margin;const x=featurize(t);for(const tr of M.trees)s+=evalTree(tr,x);return 1/(1+Math.exp(-s));}
 function decide(p){return p>=M.block_threshold?"BLOCK":p>=M.threshold?"REVIEW":"APPROVE";}
 
@@ -249,6 +448,171 @@ function render(){
       <td><span class="risk"><span class="risk-track"><span class="risk-fill t-${d}" style="width:${Math.min(100,pct).toFixed(2)}%"></span></span><span class="risk-val">${pct.toFixed(2)}%</span></span></td>
       <td class="l"><span class="pill b-${d}">${LABEL[d]}</span></td></tr>`;}).join("");
 }
+
+/* ============================ Module 7 — live monitoring ============================ */
+const MON={
+  REF_N:4000,       // reference window, drawn once from steady traffic
+  CUR_N:3000,       // sliding "current" window the drift report compares against
+  MAX_STREAM:7200,  // retained monitored period; held at capacity so the 12 rolling
+                    // windows stay a constant 600 rows and the metrics don't jitter.
+                    // At 90 txn/tick it turns over in 80 ticks (~72 s).
+  BATCH:90,         // transactions per tick
+  TICK_MS:900,
+  N_WINDOWS:12,
+};
+const mon={stream:null,reference:null,refPrAuc:NaN,rows:[],regime:"steady",n:0,
+           timer:null,running:false,primed:false};
+
+function drawScored(regime,step){
+  const t=mon.stream.draw(regime,step);
+  const r=FraudMon.featurize(t);
+  r.isFraud=t.isFraud; r.score=score(t); r.step=step;
+  return r;
+}
+
+function monReset(){
+  mon.stream=FraudMon.makeStream(7);
+  mon.n=0; mon.rows=[]; mon.regime="steady";
+  m_steady.setAttribute("aria-pressed","true");
+  m_degraded.setAttribute("aria-pressed","false");
+  // reference window: what the model was trained to expect
+  mon.reference=[];
+  for(let i=0;i<MON.REF_N;i++) mon.reference.push(drawScored("steady",-MON.REF_N+i));
+  mon.refPrAuc=FraudMon.averagePrecision(
+    mon.reference.map(r=>r.isFraud), mon.reference.map(r=>r.score));
+  // fill the monitored period to capacity, so every rolling window is the same size
+  // from the first frame (a stream still growing gives jittery per-window metrics)
+  for(let i=0;i<MON.MAX_STREAM;i++){mon.rows.push(drawScored("steady",mon.n++));}
+  mon.primed=true;
+  monRender();
+}
+
+function monTick(){
+  for(let i=0;i<MON.BATCH;i++) mon.rows.push(drawScored(mon.regime,mon.n++));
+  if(mon.rows.length>MON.MAX_STREAM) mon.rows.splice(0,mon.rows.length-MON.MAX_STREAM);
+  monRender();
+}
+
+const TRIG=FraudMon.DEFAULT_TRIGGERS;
+const n3=v=>Number.isFinite(v)?v.toFixed(3):"—";
+
+function monRender(){
+  const cur=mon.rows.slice(-MON.CUR_N);
+  const drift=FraudMon.driftReport(mon.reference,cur,M.features);
+  const perf=FraudMon.rollingPerformance(mon.rows,"step","isFraud","score",M.threshold,MON.N_WINDOWS);
+  const trig=FraudMon.evaluateTriggers(drift,perf,mon.refPrAuc);
+  const last=perf.length?perf[perf.length-1]:null;
+
+  m_scored.textContent=fmt0(mon.n);
+
+  // ---- verdict ----
+  const bad=trig.retrain_recommended;
+  m_verdict.className="verdict "+(bad?"v-retrain":"v-hold");
+  m_vmark.innerHTML=bad?"&#9888;":"&#10003;";
+  m_vtitle.textContent=bad?"Retrain recommended":"Model healthy — no retrain trigger fired";
+  m_reasons.innerHTML=(trig.reasons.length?trig.reasons:["All monitored metrics within thresholds."])
+    .map(r=>`<li>${r}</li>`).join("");
+
+  // ---- headline stats ----
+  const nDrift=drift.filter(d=>d.drifted).length;
+  const maxPsi=Math.max.apply(null,drift.map(d=>Number.isFinite(d.psi)?d.psi:0));
+  m_ndrift.textContent=`${nDrift} / ${drift.length}`;
+  m_ndrift.className="val"+(nDrift>=TRIG.n_features_drifted?" bad":"");
+  m_maxpsi.textContent=n3(maxPsi);
+  m_maxpsi.className="val"+(maxPsi>TRIG.psi_significant?" bad":"");
+  m_prec.textContent=last?n3(last.precision):"—";
+  m_prec.className="val"+(last?(last.precision<TRIG.precision_floor?" bad":" good"):"");
+  m_rec.textContent=last?n3(last.recall):"—";
+  m_rec.className="val"+(last?(last.recall<TRIG.recall_floor?" bad":" good"):"");
+
+  // ---- drift table ----
+  m_drift.innerHTML=drift.map(d=>{
+    const pct=Math.min(100,(Number.isFinite(d.psi)?d.psi:0)/0.5*100);
+    const over=d.psi>TRIG.psi_significant;
+    return `<tr>
+      <td class="l mono">${d.feature}</td>
+      <td><span class="psi"><span class="psi-track"><span class="psi-fill${over?" over":""}" style="width:${pct.toFixed(1)}%"></span></span><span class="psi-val">${n3(d.psi)}</span></span></td>
+      <td class="num">${n3(d.ks_stat)}</td>
+      <td class="num">${fmt0(d.ref_mean)}</td>
+      <td class="num">${fmt0(d.cur_mean)}</td>
+      <td class="l"><span class="pill b-${d.drifted?"BLOCK":"APPROVE"}">${d.drifted?"Drifted":"Stable"}</span></td>
+    </tr>`;}).join("");
+
+  // ---- trigger table ----
+  const minRec=perf.length?Math.min.apply(null,perf.map(p=>p.recall)):NaN;
+  const minPrec=perf.length?Math.min.apply(null,perf.map(p=>p.precision)):NaN;
+  const prs=perf.map(p=>p.pr_auc).filter(v=>Number.isFinite(v));
+  const minPr=prs.length?Math.min.apply(null,prs):NaN;
+  const rows=[
+    ["Max PSI",`> ${TRIG.psi_significant}`,n3(maxPsi),maxPsi>TRIG.psi_significant],
+    ["Features drifted",`≥ ${TRIG.n_features_drifted}`,String(nDrift),nDrift>=TRIG.n_features_drifted],
+    ["Rolling recall floor",`< ${TRIG.recall_floor}`,n3(minRec),minRec<TRIG.recall_floor],
+    ["Rolling precision floor",`< ${TRIG.precision_floor}`,n3(minPrec),minPrec<TRIG.precision_floor],
+    ["PR-AUC drop vs reference",`> ${TRIG.pr_auc_drop}`,n3(mon.refPrAuc-minPr),(mon.refPrAuc-minPr)>TRIG.pr_auc_drop],
+  ];
+  m_triggers.innerHTML=rows.map(([lab,thr,val,fired])=>`<tr>
+      <td class="l">${lab}</td><td class="num">${thr}</td><td class="num">${val}</td>
+      <td class="l"><span class="pill b-${fired?"BLOCK":"APPROVE"}">${fired?"Fired":"Clear"}</span></td>
+    </tr>`).join("");
+
+  drawChart(perf);
+}
+
+function drawChart(perf){
+  const W=720,H=210,PL=34,PR=8,PT=10,PB=22;
+  const x=i=>PL+(perf.length<2?0:i*(W-PL-PR)/(perf.length-1));
+  const y=v=>PT+(1-v)*(H-PT-PB);
+  const path=key=>perf.map((p,i)=>{
+      const v=p[key];
+      return Number.isFinite(v)?`${i===0?"M":"L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`:"";
+    }).join("");
+  const dots=(key,col)=>perf.map((p,i)=>Number.isFinite(p[key])
+      ?`<circle cx="${x(i).toFixed(1)}" cy="${y(p[key]).toFixed(1)}" r="2.6" fill="${col}"/>`:"").join("");
+  const grid=[0,0.25,0.5,0.75,1].map(v=>
+    `<line class="axis" x1="${PL}" y1="${y(v)}" x2="${W-PR}" y2="${y(v)}"/>
+     <text x="${PL-7}" y="${y(v)+3.5}" text-anchor="end">${v.toFixed(2)}</text>`).join("");
+  m_chart.innerHTML=`${grid}
+    <line class="floor" x1="${PL}" y1="${y(TRIG.recall_floor)}" x2="${W-PR}" y2="${y(TRIG.recall_floor)}" stroke="var(--ok)"/>
+    <line class="floor" x1="${PL}" y1="${y(TRIG.precision_floor)}" x2="${W-PR}" y2="${y(TRIG.precision_floor)}" stroke="var(--warn)"/>
+    <path d="${path("pr_auc")}" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+    <path d="${path("precision")}" fill="none" stroke="var(--warn)" stroke-width="1.8"/>
+    <path d="${path("recall")}" fill="none" stroke="var(--ok)" stroke-width="1.8"/>
+    ${dots("pr_auc","var(--accent)")}${dots("precision","var(--warn)")}${dots("recall","var(--ok)")}
+    <text x="${PL}" y="${H-6}">oldest window</text>
+    <text x="${W-PR}" y="${H-6}" text-anchor="end">newest</text>`;
+}
+
+function setRunning(on){
+  mon.running=on;
+  m_toggle.textContent=on?"Pause feed":"Resume feed";
+  m_live.classList.toggle("paused",!on);
+  m_livetxt.textContent=on?`live · ${MON.BATCH} txn / ${(MON.TICK_MS/1000).toFixed(1)}s`:"paused";
+  if(on&&!mon.timer) mon.timer=setInterval(()=>{if(mon.running)monTick();},MON.TICK_MS);
+}
+function setRegime(r){
+  mon.regime=r;
+  m_steady.setAttribute("aria-pressed",String(r==="steady"));
+  m_degraded.setAttribute("aria-pressed",String(r==="degraded"));
+}
+
+/* ---- tabs ---- */
+function showView(which){
+  const q=which==="queue";
+  tab_queue.setAttribute("aria-selected",String(q));
+  tab_mon.setAttribute("aria-selected",String(!q));
+  view_queue.hidden=!q; view_mon.hidden=q;
+  if(q){setRunning(false);return;}
+  if(mon.primed){setRunning(true);return;}
+  // Priming scores MON.REF_N + MON.MAX_STREAM transactions through the 300-tree
+  // ensemble, so do it on first open rather than at page load, and only after the
+  // browser has painted the "priming" message.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    monReset();
+    m_boot.hidden=true; m_body.hidden=false;
+    setRunning(true);
+  }));
+}
+
 async function boot(){
   M=await (await fetch("model.json")).json();
   document.getElementById("modelbar").innerHTML=
@@ -256,15 +620,22 @@ async function boot(){
     `<span class="sep">&middot;</span><span>${M.features.length} features</span>`+
     `<span class="sep">&middot;</span><span>${M.trees.length} trees</span>`;
   n_thr.textContent=M.threshold;n_blk.textContent=M.block_threshold;
+  m_thr.textContent=M.threshold;
   document.getElementById("loading").hidden=true;document.getElementById("app").hidden=false;
-  render();
+  render();   // the monitoring feed primes lazily, on first opening its tab
 }
 document.getElementById("manual").addEventListener("submit",e=>{
   e.preventDefault();
   const t={type:m_type.value,amount:m_amount.value,oldbalanceOrg:m_oo.value,newbalanceOrig:m_no.value,oldbalanceDest:m_od.value,newbalanceDest:m_nd.value};
-  const p=score(t),d=decide(t.p=p);const col={BLOCK:"var(--crit)",REVIEW:"var(--warn)",APPROVE:"var(--ok)"}[d];
+  const p=score(t),d=decide(t.p=p);
   document.getElementById("manualOut").innerHTML=`<span class="pill b-${d}">${LABEL[d]}</span> &nbsp;fraud probability <b>${(p*100).toFixed(2)}%</b>`;
 });
+tab_queue.addEventListener("click",()=>showView("queue"));
+tab_mon.addEventListener("click",()=>showView("mon"));
+m_toggle.addEventListener("click",()=>setRunning(!mon.running));
+m_reset.addEventListener("click",()=>{monReset();});
+m_steady.addEventListener("click",()=>setRegime("steady"));
+m_degraded.addEventListener("click",()=>setRegime("degraded"));
 boot().catch(e=>{document.getElementById("loading").textContent="Failed to load model: "+e;});
 </script>
 </body>
