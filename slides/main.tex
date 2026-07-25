@@ -185,6 +185,44 @@ e.g.\ \texttt{is\_new\_device}: $p = 0.55$ if fraud, $0.08$ if legitimate\\
 \end{block}
 \end{frame}
 
+% ---------------- 5b (data dictionary)
+\begin{frame}{2. Documenting every synthetic field}
+The brief requires a \textbf{data dictionary}: each generated field must state
+its name, type, unit, valid range, and generation logic.
+
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{lll}
+\toprule
+Field (type $\cdot$ unit) & Range & Generation logic (fraud vs.\ legit) \\
+\midrule
+\texttt{account\_age\_days} (int $\cdot$ day)   & 1--3650       & Gamma; mean $\approx 44$ vs $500$ \\
+\texttt{is\_new\_device} (0/1)                   & \{0,1\}       & Bernoulli $p = 0.55$ vs $0.08$ \\
+\texttt{ip\_billing\_mismatch} (0/1)             & \{0,1\}       & Bernoulli $p = 0.50$ vs $0.02$ \\
+\texttt{failed\_payment\_attempts} (int)         & $0$--$\sim$10 & Poisson $\lambda = 2.2$ vs $0.12$ \\
+\texttt{ip\_billing\_distance\_km} (km)          & 0--8000       & Uniform$(500,8000)$ if mismatch, else $(0,80)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\good{10 contextual fields} documented in total\\
+(\texttt{channel} is EDA-only; 7 risk signals feed the model)
+\end{column}
+\begin{column}{0.5\textwidth}
+Exported as \texttt{data\_dictionary.\{md,csv,xlsx\}}\\
+\footnotesize Reproducible from a single notebook cell.
+\end{column}
+\end{columns}
+
+\vspace{0.4em}
+\centering
+\footnotesize The label-conditional parameters above are exactly what makes the
+\warn{leakage} measurable (next slides).
+\end{frame}
+
 % ---------------- 6
 \begin{frame}{3. The trap we found in our own data}
 Our synthetic features separate the classes beautifully:
@@ -286,6 +324,30 @@ fraud rate only $0.223\%$ ($1.7\times$)
 $\to$ becomes our top feature
 \end{column}
 \end{columns}
+\end{frame}
+
+% ---------------- 8b (EDA by channel)
+\begin{frame}{4. EDA: fraud rate by transaction channel}
+\begin{center}
+\includegraphics[height=0.52\textheight]{fraud_rate_channel.png}
+\end{center}
+
+\begin{columns}[T]
+\begin{column}{0.56\textwidth}
+\texttt{api} and \texttt{web} sit \good{above} the $0.129\%$ average;
+\texttt{POS} and \texttt{mobile} below it.
+\texttt{api} runs \good{$\approx 7\times$} the \texttt{mobile} rate.
+\end{column}
+\begin{column}{0.44\textwidth}
+\footnotesize
+\texttt{channel} is a \emph{synthetic, EDA-only} field, so this split partly
+reflects how it was generated --- reported as description, not proof.
+\end{column}
+\end{columns}
+
+\vspace{0.3em}
+\centering
+\footnotesize Fraud rate by hour-of-day (\texttt{step} mod $24$) was also examined in the notebook.
 \end{frame}
 
 % ---------------- 9
